@@ -2,7 +2,7 @@
 	Ishita Korde ikord001@ucr.edu
 	Yuteng Zhang yzhan399@ucr.edu
  *	Lab Section: 021
- *	Assignment: Lab #8  Exercise #1 
+ *	Assignment: Lab #8  Exercise #4 
  *	Exercise Description: [optional - include for your own benefit]
  *	
  *	I acknowledge all content contained herein, excluding template or example
@@ -22,20 +22,25 @@ void ADC_init() {
 
 int main(void)
 {
-    /* Replace with your application code */
-	 
+	/* Replace with your application code */
+	
 	DDRA = 0x00; PORTA = 0xFF;
-	DDRB = 0xFF; PORTB = 0x00; 
-	DDRD = 0xFF; PORTD = 0x00; // Init port B to 0s
-	ADC_init();
-	//unsigned short x = ADC;  // Value of ADC register now stored in variable x.
-    while (1) 
-    {
-		unsigned short my_short = ADC;
-		unsigned char my_char = (char)my_short; // my_char = 0xCD
-		PORTB = my_char; 
-		my_char = (char)(my_short >> 4); // my_char = 0xBC
-		PORTD = my_char; 
-    }
-}
+	DDRB = 0xFF; PORTB = 0x00;
 
+	ADC_init();
+	int MAX = 120/2;
+	//unsigned short x = ADC;  // Value of ADC register now stored in variable x.
+	while (1)
+	{
+		unsigned char my_char = (char)my_short; // my_char = 0xCD
+		if(ADC >= MAX/8) {PORTB = 0x01; }		//light the LED connected to PB0
+		else if(ADC >= (MAX/8)*2) {PORTB = 0x02; }
+		else if(ADC >= (MAX/8)*3) {PORTB = 0x04; }
+		else if(ADC >= (MAX/8)*4) {PORTB = 0x08; }
+		else if(ADC >= (MAX/8)*5) {PORTB = 0x10; }
+		else if(ADC >= (MAX/8)*6) {PORTB = 0x20; }
+		else if(ADC >= (MAX/8)*7) {PORTB = 0x40; }
+		else if(ADC >= (MAX/8)*8) {PORTB = 0x80; }
+		else {PORTB = 0x00; }	//do not light LED
+	}
+}
