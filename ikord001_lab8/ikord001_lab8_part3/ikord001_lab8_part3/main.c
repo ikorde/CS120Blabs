@@ -3,7 +3,7 @@
 	Yuteng Zhang yzhan399@ucr.edu
  *	Lab Section: 021
  *	Assignment: Lab #8  Exercise #3 
- *	Exercise Description: [optional - include for your own benefit]
+ *	Exercise Description: lights one led if enough light is sensed
  *	
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
@@ -28,12 +28,12 @@ int main(void)
 	DDRB = 0xFF; PORTB = 0x00; 
 	//DDRD = 0xFF; PORTD = 0x03; 
 	ADC_init();
-	int MAX = 120;
+	int MAX = 850;
 	//unsigned short x = ADC;  // Value of ADC register now stored in variable x.
     while (1) 
     {
-		unsigned char my_char = (char)my_short; // my_char = 0xCD
-		if(ADC >= MAX/2) {PORTB = 0x01; }		//light the LED connected to PB0
-		else if(ADC < MAX/2) {PORTB = 0x00; }	//do not light LED
+		//unsigned char my_char = (char)my_short; // my_char = 0xCD
+		if(ADC <= MAX/2) {PORTB = 0x01; }		//light the LED connected to PB0
+		else if(ADC > MAX/2) {PORTB = 0x00; }	//do not light LED
     }
 }

@@ -3,7 +3,7 @@
 	Yuteng Zhang yzhan399@ucr.edu
  *	Lab Section: 021
  *	Assignment: Lab #8  Exercise #4 
- *	Exercise Description: [optional - include for your own benefit]
+ *	Exercise Description: lights a light depending on how bright sensed light is
  *	
  *	I acknowledge all content contained herein, excluding template or example
  *	code, is my own original work.
@@ -28,19 +28,21 @@ int main(void)
 	DDRB = 0xFF; PORTB = 0x00;
 
 	ADC_init();
-	int MAX = 120/2;
+	int MAX = 900;
 	//unsigned short x = ADC;  // Value of ADC register now stored in variable x.
 	while (1)
 	{
-		unsigned char my_char = (char)my_short; // my_char = 0xCD
-		if(ADC >= MAX/8) {PORTB = 0x01; }		//light the LED connected to PB0
-		else if(ADC >= (MAX/8)*2) {PORTB = 0x02; }
-		else if(ADC >= (MAX/8)*3) {PORTB = 0x04; }
-		else if(ADC >= (MAX/8)*4) {PORTB = 0x08; }
-		else if(ADC >= (MAX/8)*5) {PORTB = 0x10; }
-		else if(ADC >= (MAX/8)*6) {PORTB = 0x20; }
-		else if(ADC >= (MAX/8)*7) {PORTB = 0x40; }
-		else if(ADC >= (MAX/8)*8) {PORTB = 0x80; }
+		
+		
+		if(ADC <= MAX/8) {PORTB = 0x01; }		//light the LED connected to PB0
+		else if(ADC <= (MAX/8)*2 && ADC>MAX/8) {PORTB = 0x02; }
+		else if(ADC <= (MAX/8)*3 && ADC>2*MAX/8) {PORTB = 0x04; }
+		else if(ADC <= (MAX/8)*4 && ADC>3*MAX/8) {PORTB = 0x08; }
+		else if(ADC <= (MAX/8)*5 && ADC>4*MAX/8) {PORTB = 0x10; }
+		else if(ADC <= 6*(MAX/8) && ADC>5*MAX/8)  {PORTB = 0x20; }
+		else if(ADC <= 7*MAX/8  && ADC>6*MAX/8) {PORTB = 0x40; }
+		else if(ADC <= MAX && ADC>7*MAX/8) {PORTB = 0x80; }
 		else {PORTB = 0x00; }	//do not light LED
+		
 	}
 }
