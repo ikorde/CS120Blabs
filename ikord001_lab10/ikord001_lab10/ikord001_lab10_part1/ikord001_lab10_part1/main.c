@@ -70,9 +70,9 @@ void TimerSet(unsigned long M) {
 }
 
 // SynchSM Code
-enum States_1 {start_1, L0_1,L1_1,L2_1} state_1;
-enum States_2 {start_2, L0_2,L1_2} state_2;
-enum States_3 {start_3, L0_3} state_3;
+enum States_1 { L0_1,L1_1,L2_1} state_1;
+enum States_2 { L0_2,L1_2} state_2;
+enum States_3 { L0_3} state_3;
 
 //unsigned char tmpA = 0x00;
 unsigned char threeLEDS = 0x00;
@@ -84,9 +84,6 @@ void Tick_1()
 	
 	switch (state_1)	//transitions
 	{
-		case start_1:
-		state_1 = L0_1;
-		break;
 		
 		case L0_1:
 		state_1=L1_1;
@@ -106,10 +103,7 @@ void Tick_1()
 	
 	switch (state_1)	//actions
 	{
-		case start_1:
-		threeLEDS = 0x00;
-		break;
-		
+	
 		case L0_1:
 		threeLEDS = 0x01;
 		break;
@@ -133,16 +127,13 @@ void Tick_2()
 	
 	switch (state_2)
 	{
-		case start_2:
-		state_2 = L0_2;
-		break;
 		
 		case L0_2:
 		state_2=L1_2;
 		break;
 		
 		case L1_2:
-		state_2=start_2;
+		state_2=L0_2;
 		break;
 		
 		default:
@@ -151,9 +142,6 @@ void Tick_2()
 	
 	switch (state_2)
 	{
-		case start_2:
-		blinkingLED = 0x00;
-		break;
 		
 		case L0_2:
 		blinkingLED = 0x08;
@@ -169,7 +157,9 @@ void Tick_2()
 }
 
 void Tick_3() {
-	switch (state_3) {
+	
+	PORTB = threeLEDS; 
+	/*switch (state_3) {
 		case start_3:
 		state_3 = L0_3;
 		break; 
@@ -183,9 +173,10 @@ void Tick_3() {
 		break; 
 
 		case L0_3: 
-		PORTB = threeLEDS | blinkingLED; 
+		PORTB = threeLEDS; //| blinkingLED; 
 		break; 
 	}
+	*/
 }
 
 
@@ -196,16 +187,16 @@ int main(void){
 	TimerSet(100);
 	TimerOn();
 
-	state_1 = start_1;
-	state_2 = start_2;
+	state_1 = L0_1;
+	state_2 = L0_2;
 	while(1) {
 		// User code (i.e. synchSM calls)
 		Tick_1();
 		Tick_2();
-		Tick_3();  		
+		//Tick_3();  		
 		while (!TimerFlag);	// Wait 1 sec
 		TimerFlag = 0;		
-		//PORTB = tmpB;
+		PORTB = threeLEDS | blinkingLED;
 
 	}
 }
