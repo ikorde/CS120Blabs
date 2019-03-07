@@ -185,7 +185,7 @@ int main(void)
 			}
 			tasks[i]->elapsedTime += 1;
 		}*/
-		LCD_Cursor(1);
+		//LCD_Cursor(1);
 		Tick1(); 
 		//Tick2(); 
 		while(!TimerFlag);
@@ -197,7 +197,7 @@ int main(void)
 }
 
 
-
+/*
 #include <avr/io.h>
 #include "io.c"
 
