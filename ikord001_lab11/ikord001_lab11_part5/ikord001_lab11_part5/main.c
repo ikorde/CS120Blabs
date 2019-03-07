@@ -23,11 +23,11 @@ enum character { startR, moving, loseR }state1;
 enum cursor { startC, play, loseC}state2;
 
 void Tick1() {
-	butt = ~PINA & 0x01;
+	butt = ~PINA & 0x07;
 	
 	switch(state1) {		//transitions
 		case(startR):
-			if(butt) {	//press button to start game
+			if(butt==0x01) {	//press button to start game
 				state1 = moving;
 				buttOn = 1;
 			}
