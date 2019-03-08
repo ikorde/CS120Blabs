@@ -19,23 +19,32 @@ unsigned char cnt = 0;
 unsigned char print[16];
 unsigned char b1 = 0x00;
 unsigned char correct = 0; 
-
-enum states {init,press,play,end} state;
-int tick(state){
-	b1 = ~PINA & 0x01; 
+unsigned char playPress=0;
+enum states {init,press,play,end,correct1} state;
+//int tick(state){
+	void tick() {
+	b1 = ~PINA & 0x07; 
 	switch(state) {
 		case init:
-			if(b1==0x01) state = play; 
-			else state = init;
+			if(b1==0x01) {
+				//playPress=1; 
+				state = play; 
+			}
+			//else state = init;
 			break; 
 		case press:
-			if(b1==0x02) state = init; 
-			else state = press; 
+			//if(b1==0x02) state = init; 
+			//else state = press; 
 			break; 
 		case play:
-			state = play;
+			//if(playPress==1) state = play;
+			if(b1==0x04) state = correct1;
+			else state = play;
 			/*if(correct) state = end; 
 			else state = play; */
+			break;
+		case correct1:
+			state = correct1;
 			break;
 		case end: 
 			state =end; 
@@ -51,10 +60,22 @@ int tick(state){
 			LCD_DisplayString(1, "press");
 			break;
 		case play: 
-			LCD_DisplayString(1, "2+2=");
+			if(b1==0x00) {
+				LCD_DisplayString(1, "2+2=");
+				//LCD_DisplayString(8, "r");
+				LCD_Cursor(17); 
+				LCD_WriteData(8+'0');
+				LCD_Cursor(25);
+				LCD_WriteData(4+'0');
+			}
+			
 			//LCD_DisplayString(16, "A:4");
 			//LCD_DisplayString(20, "B: 5");
 			break; 
+		case correct1:
+			LCD_ClearScreen();
+			LCD_DisplayString(4, "YAS");
+			break;
 		case end: 
 			LCD_ClearScreen(); 
 			LCD_DisplayString(4, "you win");
@@ -83,13 +104,15 @@ int main(void)
 	task1.elapsedTime = SMTick1_period;//Task current elapsed time.
 	task1.TickFct = &tick;//Function pointer for the tick.
 	
-	TimerSet(100);
+	TimerSet(20);
 	TimerOn();
 	LCD_init();
 
 	unsigned short i;
 	while(1)
 	{
+		//PORTB = 0x01; 
+		//LCD_DisplayString(1,"yas bitch");
 		// Scheduler code
 		/*
 		for ( i = 0; i < numTasks; i++ ) {
@@ -101,9 +124,9 @@ int main(void)
 				tasks[i]->elapsedTime = 0;
 			}
 			tasks[i]->elapsedTime += 1;
-		}
-		*/
-		tick(init);
+		}*/
+		
+		tick();
 		while (!TimerFlag);
 		TimerFlag = 0;
 	}
