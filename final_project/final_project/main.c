@@ -112,7 +112,6 @@ int main(void)
 	while(1)
 	{
 		//PORTB = 0x01; 
-		//LCD_DisplayString(1,"yas bitch");
 		// Scheduler code
 		/*
 		for ( i = 0; i < numTasks; i++ ) {
