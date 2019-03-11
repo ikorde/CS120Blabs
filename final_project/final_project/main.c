@@ -20,47 +20,72 @@ unsigned char print[16];
 unsigned char b1 = 0x00;
 unsigned char correct = 0; 
 unsigned char playPress=0;
-enum states {init,press,play,end,correct1} state;
+unsigned char wait = 0;
+unsigned char score = 0; 
+enum states {init,start,q1,disp1,q2,disp2,q3,disp3,end} state;
 //int tick(state){
 	void tick() {
 	b1 = ~PINA & 0x07; 
 	switch(state) {
 		case init:
-			if(b1==0x01) {
-				//playPress=1; 
-				state = play; 
-			}
-			//else state = init;
+			if(wait<20) {++wait; state=init;}
+			else {state=start; wait=0; }
 			break; 
-		case press:
-			//if(b1==0x02) state = init; 
-			//else state = press; 
+		case start:
+			if(wait<20) {++wait; state=start;}
+			else {state=q1; wait=0; }
 			break; 
-		case play:
-			//if(playPress==1) state = play;
-			if(b1==0x04) state = correct1;
-			else state = play;
-			/*if(correct) state = end; 
-			else state = play; */
+		case q1:
+			//if(wait<5000 && b1 == 0x00) {++wait; state=q1;} 
+			//else {state=disp1; wait=0; }
+			if(b1==0x04) {state = disp1; correct=1;}
+			else if(b1==0x02) {state = disp1; correct=0;}
+			else state = q1; 
 			break;
-		case correct1:
-			state = correct1;
+		case disp1: 
+			if(wait<20) {++wait; state=disp1;}
+			else {state=q2; wait=0; }
+			break;
+		case q2:
+			//if(wait<5000 && b1 == 0x00) {++wait; state=q2;}
+			//else {state=disp2; wait=0; }
+			correct=0; 
+			if(b1==0x02) {state = disp2; correct=1;} 
+			else if(b1==0x04) {state = disp2; correct=0;} 
+			else state = q2;
+			break;
+		case disp2:
+			if(wait<20) {++wait; state=disp2;}
+			else {state=q3; wait=0; }
+			break;
+		case q3:
+			//if(wait<5000 && b1 == 0x00) {++wait; state=q3;}
+			//else {state=disp3; wait=0; }
+			if(b1==0x04) {state = disp3; correct=1;}
+			else if(b1==0x02) {state = disp2; correct=0;}
+			else state = q3;
+			break;
+		case disp3:
+			if(wait<20) {++wait; state=disp3;}
+			else {state=end; wait=0; }
 			break;
 		case end: 
-			state =end; 
+			state = end; 
 			break;  
 		default: state = init;break;
 	}
 	
 	switch(state) {
 		case init: 
-			LCD_DisplayString(1, "start");
+			LCD_DisplayString(1, "Quick Maths"); // with 3 questions each. You will have 5 seconds to answer each question.
 			break; 
-		case press: 
-			LCD_DisplayString(1, "press");
+		case start:
+			LCD_ClearScreen(); 
+			LCD_DisplayString(1, "QUESTION 1");
 			break;
-		case play: 
+		case q1: 
 			if(b1==0x00) {
+				LCD_ClearScreen();
 				LCD_DisplayString(1, "2+2=");
 				//LCD_DisplayString(8, "r");
 				LCD_Cursor(17); 
@@ -68,17 +93,53 @@ enum states {init,press,play,end,correct1} state;
 				LCD_Cursor(25);
 				LCD_WriteData(4+'0');
 			}
-			
-			//LCD_DisplayString(16, "A:4");
-			//LCD_DisplayString(20, "B: 5");
+			if(correct) ++score;
 			break; 
-		case correct1:
+		case disp1:
 			LCD_ClearScreen();
-			LCD_DisplayString(4, "YAS");
+			LCD_DisplayString(4, "QUESTION 2");
 			break;
+		case q2:
+			if(b1==0x00) {
+				LCD_ClearScreen();
+				LCD_DisplayString(1, "9*8=");
+				LCD_Cursor(17);
+				LCD_WriteData(7+'0');
+				LCD_Cursor(18);
+				LCD_WriteData(2+'0');
+				LCD_Cursor(25);
+				LCD_WriteData(6+'0');
+				LCD_Cursor(26);
+				LCD_WriteData(4+'0');
+			}
+			if(correct) ++score;
+			break;
+		case disp2:
+			LCD_ClearScreen();
+			LCD_DisplayString(4, "QUESTION 3");
+			break;
+		case q3:
+			if(b1==0x00) {
+				LCD_ClearScreen();
+				LCD_DisplayString(1, "7*3+15 / 4=");
+				//LCD_DisplayString(8, "r");
+				LCD_Cursor(17);
+				LCD_WriteData(6+'0');
+				LCD_Cursor(25);
+				LCD_WriteData(9+'0');
+			}
+			if(correct) ++score;
+			break;
+		case disp3:
+			LCD_ClearScreen();
+			LCD_DisplayString(4, "END ROUND1");
+			break;	
 		case end: 
 			LCD_ClearScreen(); 
-			LCD_DisplayString(4, "you win");
+			LCD_DisplayString(6, "Score");
+			LCD_Cursor(25);
+			LCD_WriteData(score+'0');
+			
 			break;
 	}
 	
@@ -104,7 +165,7 @@ int main(void)
 	task1.elapsedTime = SMTick1_period;//Task current elapsed time.
 	task1.TickFct = &tick;//Function pointer for the tick.
 	
-	TimerSet(20);
+	TimerSet(100);
 	TimerOn();
 	LCD_init();
 
