@@ -13,69 +13,68 @@
 #include "io.c"
 #include "timer.h"
 #include "scheduler.h"
+#include "usart.h"
 
-char * string = "CS120B is Legend... wait for it DARY!  ";
-unsigned char cnt = 0;
-unsigned char print[16];
 unsigned char b1 = 0x00;
 unsigned char correct = 0; 
-unsigned char playPress=0;
 unsigned char wait = 0;
 unsigned char score = 0; 
-enum states {init,start,q1,disp1,q2,disp2,q3,disp3,end} state;
+unsigned char finished = 0; 
+enum states1 {init,start,q1,disp1,q2,disp2,q3,disp3,end} state1;
+	
 //int tick(state){
-	void tick() {
+void tick1() {
 	b1 = ~PINA & 0x07; 
-	switch(state) {
+	switch(state1) {
 		case init:
-			if(wait<20) {++wait; state=init;}
-			else {state=start; wait=0; }
+			if(wait<20) {++wait; state1=init;}
+			else {state1=start; wait=0; }
 			break; 
 		case start:
-			if(wait<20) {++wait; state=start;}
-			else {state=q1; wait=0; }
+			if(wait<20) {++wait; state1=start;}
+			else {state1=q1; wait=0; }
 			break; 
 		case q1:
-			//if(wait<5000 && b1 == 0x00) {++wait; state=q1;} 
-			//else {state=disp1; wait=0; }
-			if(b1==0x04) {state = disp1; correct=1;}
-			else if(b1==0x02) {state = disp1; correct=0;}
-			else state = q1; 
+			//if(wait<5000 && b1 == 0x00) {++wait; state1=q1;} 
+			//else {state1=disp1; wait=0; }
+			if(b1==0x04) {state1 = disp1; correct=1;}
+			else if(b1==0x02) {state1 = disp1; correct=0;}
+			else state1 = q1; 
 			break;
 		case disp1: 
-			if(wait<20) {++wait; state=disp1;}
-			else {state=q2; wait=0; }
+			if(wait<20) {++wait; state1=disp1;}
+			else {state1=q2; wait=0; }
 			break;
 		case q2:
-			//if(wait<5000 && b1 == 0x00) {++wait; state=q2;}
-			//else {state=disp2; wait=0; }
+			//if(wait<5000 && b1 == 0x00) {++wait; state1=q2;}
+			//else {state1=disp2; wait=0; }
 			correct=0; 
-			if(b1==0x02) {state = disp2; correct=1;} 
-			else if(b1==0x04) {state = disp2; correct=0;} 
-			else state = q2;
+			if(b1==0x02) {state1 = disp2; correct=1;} 
+			else if(b1==0x04) {state1 = disp2; correct=0;} 
+			else state1 = q2;
 			break;
 		case disp2:
-			if(wait<20) {++wait; state=disp2;}
-			else {state=q3; wait=0; }
+			if(wait<20) {++wait; state1=disp2;}
+			else {state1=q3; wait=0; }
 			break;
 		case q3:
-			//if(wait<5000 && b1 == 0x00) {++wait; state=q3;}
-			//else {state=disp3; wait=0; }
-			if(b1==0x04) {state = disp3; correct=1;}
-			else if(b1==0x02) {state = disp2; correct=0;}
-			else state = q3;
+			//if(wait<5000 && b1 == 0x00) {++wait; state1=q3;}
+			//else {state1=disp3; wait=0; }
+			if(b1==0x04) {state1 = disp3; correct=1;}
+			else if(b1==0x02) {state1 = disp3; correct=0;}
+			else state1 = q3;
 			break;
 		case disp3:
-			if(wait<20) {++wait; state=disp3;}
-			else {state=end; wait=0; }
+			if(wait<20) {++wait; state1=disp3;}
+			else {state1=end; wait=0; }
 			break;
 		case end: 
-			state = end; 
+			state1 = end; 
 			break;  
-		default: state = init;break;
+		default: state1 = init;break;
 	}
 	
-	switch(state) {
+	switch(state1) {
 		case init: 
 			LCD_DisplayString(1, "Quick Maths"); // with 3 questions each. You will have 5 seconds to answer each question.
 			break; 
@@ -139,13 +138,15 @@ enum states {init,start,q1,disp1,q2,disp2,q3,disp3,end} state;
 			LCD_DisplayString(6, "Score");
 			LCD_Cursor(25);
 			LCD_WriteData(score+'0');
-			
+			finished=1; 
+			if(finished==1) PORTA=0x01; 
 			break;
 	}
+	return state1;
+}
+
+void tick2() {
 	
-	
-	
-	return state;
 }
 
 int main(void)
@@ -159,11 +160,19 @@ int main(void)
 	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 	unsigned long int SMTick1_period = 20;
 
+	// USART code , communication between two micro-controllers
+	initUSART(0);
+	unsigned char t = 0x01;
+	USART_Send(t,0);
+	if(USART_Receive(0)==0x01) {
+		PORTB = 0x01; 
+	}
+	
 	// Task 1
 	task1.state = init;//Task initial state.
 	task1.period = SMTick1_period;//Task Period.
 	task1.elapsedTime = SMTick1_period;//Task current elapsed time.
-	task1.TickFct = &tick;//Function pointer for the tick.
+	task1.TickFct = &tick1;//Function pointer for the tick.
 	
 	TimerSet(100);
 	TimerOn();
@@ -186,7 +195,7 @@ int main(void)
 			tasks[i]->elapsedTime += 1;
 		}*/
 		
-		tick();
+		tick1();
 		while (!TimerFlag);
 		TimerFlag = 0;
 	}
