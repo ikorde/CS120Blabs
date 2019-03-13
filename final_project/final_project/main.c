@@ -37,8 +37,8 @@ void ADC_init() {
 	and only moves on to next if current is answered correCtly.
 	Input taken from two buttons. 
 */
-//void tick1() {
-int tick1(state1){
+void tick1() {
+//int tick1(state1){
 	b1 = ~PINA & 0x07; 
 	switch(state1) {		// Transitions
 		case init:
@@ -154,7 +154,7 @@ int tick1(state1){
 			
 			//LCD_DisplayString(1,score);
 			finished=1; 
-			if(finished==1) PORTA=0x01; 
+			//if(finished==1) PORTA=0x01; 
 		break;
 	}
 	return state1;
@@ -176,9 +176,9 @@ void tick2() {
 			else {state2=q1_2; wait=0; }
 		break;
 		case q1_2:
-			correct=0;
-			if(ADC > 900) {correct=1; state2=disp1_2; }				//joystick up
-			else if(ADC < 500) {correct=0; state2=disp1_2; }		//joystick down
+			//correct=0;
+			if(ADC > 900) {correct=0; state2=disp1_2; }				//joystick up
+			else if(ADC < 500) {correct=1; state2=disp1_2; }		//joystick down
 			else state2 = q1_2;
 		break;
 		case disp1_2: 
@@ -186,9 +186,9 @@ void tick2() {
 			else {state2=q2_2; wait=0; }
 		break;
 		case q2_2:
-			correct=0;
-			if(ADC > 900) {correct=0; state2=disp2_2; }				//joystick up
-			else if(ADC < 500) {correct=1; state2=disp2_2; }		//joystick down
+			//correct=0;
+			if(ADC > 900) {correct=1; state2=disp2_2; }				//joystick up
+			else if(ADC < 500) {correct=0; state2=disp2_2; }		//joystick down
 			else state2 = q2_2;
 		break;
 		case disp2_2:
@@ -196,7 +196,7 @@ void tick2() {
 			else {state2=q3_2; wait=0; }
 		break;
 		case q3_2:
-			correct=0;
+			//correct=0;
 			if(ADC > 900) {correct=0; state2=disp3_2; }				//joystick up
 			else if(ADC < 500) {correct=1; state2=disp3_2; }		//joystick down
 			else state2 = q3_2;
@@ -221,27 +221,47 @@ void tick2() {
 		break;
 		case q1_2:
 			LCD_ClearScreen();
-			LCD_DisplayString(1, "9*8=");
-			LCD_Cursor(17);
-			LCD_WriteData(7+'0');
-			LCD_Cursor(18);
-			LCD_WriteData(2+'0');
-			LCD_Cursor(25);
-			LCD_WriteData(6+'0');
-			LCD_Cursor(26);
-			LCD_WriteData(4+'0');
+			LCD_DisplayString(2, "32*3 > 61*2");
 		break;
 		case disp1_2:
 			LCD_ClearScreen();
 			LCD_DisplayString(4, "QUESTION 2");
 		break;
+		case q2_2:
+			LCD_ClearScreen();
+			LCD_DisplayString(1, "8*3-2/2 = 2+6+3");
+		break;
+		case disp2_2:
+			LCD_ClearScreen();
+			LCD_DisplayString(4, "QUESTION 3");
+		break;
+		case q3_2:
+			LCD_ClearScreen();
+			LCD_DisplayString(1, "86*3+9 > 15*18+1");
+		break;
+		case disp3_2:
+			LCD_ClearScreen();
+			LCD_DisplayString(4, "END ROUND 2");
+		break;
+		case end_2:
+			LCD_ClearScreen();
+			LCD_DisplayString(2, "ROUND3");
+			score=0;
+		break;
+	}
+}
+
+void scoreDisp(unsigned char finalscore) {
+	if(finalscore==0) {
+		PORTA=0x04 | 0x08 | 0x02 ;
+		PORTB=0x01 | 0x02 | 0x04;
 	}
 }
 
 int main(void)
 {
 	DDRB = 0xFF; PORTB = 0x00;
-	DDRA = 0x00; PORTA = 0xFF; 
+	DDRA = 0xFF; PORTA = 0x00; 
 	//DDRA = 0xFF; PORTA = 0x00;
 	DDRC = 0xFF; PORTC = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
@@ -287,19 +307,17 @@ int main(void)
 		}
 		*/
 		
-		//tick1();
-		//tick2();
-		
+		tick1();
+		if(finished) tick2();
 		//USART code
 		
 		initUSART(1);
-		
-		//USART_Send(score,1);
-		if(USART_HasReceived(1)) {
-			t = USART_Receive(1);
-			if(t==1 || t==2) PORTB=0x01;
-			if(t==3 || t==0) PORTB = 0x02;
-		}
+		//score=0;
+		USART_Send(score,1);
+ 		if(USART_HasReceived(1)) {
+ 			t = USART_Receive(1);
+ 			scoreDisp(t);
+ 		}
 		//else PORTB = 0x01;
 		
 		while (!TimerFlag);
