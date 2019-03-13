@@ -18,9 +18,19 @@
 unsigned char b1 = 0x00;
 unsigned char correct = 0; 
 unsigned char wait = 0;
-unsigned char score = 0; 
+unsigned char score = 0x00; 
 unsigned char finished = 0; 
 enum states1 {init,start,q1,disp1,q2,disp2,q3,disp3,end} state1;
+enum states2 {init2,dispJ}state2;
+
+void ADC_init() {
+	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
+	// ADEN: setting this bit enables analog-to-digital conversion.
+	// ADSC: setting this bit starts the first conversion.
+	// ADATE: setting this bit enables auto-triggering. Since we are
+	//        in Free Running Mode, a new conversion will trigger whenever
+	//        the previous conversion completes.
+}
 	
 //int tick(state){
 void tick1() {
@@ -77,6 +87,7 @@ void tick1() {
 	switch(state1) {
 		case init: 
 			LCD_DisplayString(1, "Quick Maths"); // with 3 questions each. You will have 5 seconds to answer each question.
+			score=0x00;
 			break; 
 		case start:
 			LCD_ClearScreen(); 
@@ -92,7 +103,8 @@ void tick1() {
 				LCD_Cursor(25);
 				LCD_WriteData(4+'0');
 			}
-			if(correct) ++score;
+			if(correct) score=score+1;
+			
 			break; 
 		case disp1:
 			LCD_ClearScreen();
@@ -111,7 +123,7 @@ void tick1() {
 				LCD_Cursor(26);
 				LCD_WriteData(4+'0');
 			}
-			if(correct) ++score;
+			if(correct) score=score+1;
 			break;
 		case disp2:
 			LCD_ClearScreen();
@@ -127,7 +139,7 @@ void tick1() {
 				LCD_Cursor(25);
 				LCD_WriteData(9+'0');
 			}
-			if(correct) ++score;
+			if(correct) score=score+1;
 			break;
 		case disp3:
 			LCD_ClearScreen();
@@ -136,8 +148,11 @@ void tick1() {
 		case end: 
 			LCD_ClearScreen(); 
 			LCD_DisplayString(6, "Score");
+			//score=3;
 			LCD_Cursor(25);
 			LCD_WriteData(score+'0');
+			
+			//LCD_DisplayString(1,score);
 			finished=1; 
 			if(finished==1) PORTA=0x01; 
 			break;
@@ -145,14 +160,41 @@ void tick1() {
 	return state1;
 }
 
+
 void tick2() {
-	
+	unsigned short x=ADC;
+	switch(state2) {
+		case init2:
+			/*if(wait<20) {++wait; state1=init2;}
+			else {state1=dispJ; wait=0; }*/
+			state2=dispJ;
+		break;
+
+		
+		case dispJ:
+			state2 = dispJ; 
+		break;
+	}
+	switch(state2) {
+		case init2: 
+			LCD_ClearScreen();
+			LCD_DisplayString(3,"Round 2");
+			break;
+		case dispJ:
+			LCD_ClearScreen();
+			if(ADC<20) LCD_DisplayString(1,"20");	
+			if(ADC>40) LCD_DisplayString(1,"40");
+			if(ADC>60) LCD_DisplayString(1,"60");
+			if(ADC==1023) LCD_DisplayString(1,"1000");
+			break;
+	}
 }
 
 int main(void)
 {
 	DDRB = 0xFF; PORTB = 0x00;
-	DDRA = 0x00; PORTA = 0xFF;
+	DDRA = 0x00; PORTA = 0xFF; 
+	//DDRA = 0xFF; PORTA = 0x00;
 	DDRC = 0xFF; PORTC = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 	static task task1;
@@ -161,12 +203,12 @@ int main(void)
 	unsigned long int SMTick1_period = 20;
 
 	// USART code , communication between two micro-controllers
-	initUSART(0);
+	/*initUSART(0);
 	unsigned char t = 0x01;
-	USART_Send(t,0);
-	if(USART_Receive(0)==0x01) {
-		PORTB = 0x01; 
-	}
+	//USART_Send(t,0);
+	if(USART_HasReceived(0)==0x01) {
+		PORTB = USART_Receive(0); 
+	}*/
 	
 	// Task 1
 	task1.state = init;//Task initial state.
@@ -177,6 +219,7 @@ int main(void)
 	TimerSet(100);
 	TimerOn();
 	LCD_init();
+	ADC_init();
 
 	unsigned short i;
 	while(1)
@@ -195,9 +238,39 @@ int main(void)
 			tasks[i]->elapsedTime += 1;
 		}*/
 		
-		tick1();
+		//tick1();
+		/*
+		initUSART(0);
+		unsigned char t = 0x02;
+		USART_Send(t,0);
+		//if(USART_HasReceived(0)) {
+			PORTB = USART_Receive(0);
+		//}*/
+		
+		//if(PINB==0x01) {PORTA=0x01;}
+		//PORTA=0x01;
+		
+		//unsigned short my_short = ADC;
+		//unsigned short c = 0x0F;
+		if(ADC < 971) {
+			PORTB = 0x01;
+		}
+		if(ADC > 1000) {
+			PORTB = 0x04; 
+		}
+		if(ADC < 500) PORTB=0x02;
+		//PORTB=ADC;
+		//else PORTB = 0x04; 
+		//state2=init;
+		//tick2();
+		
+		//PORTB=ADC;
+		//my_char = (char)(my_short >> 4); // my_char = 0xBC
+		//PORTD = my_char;
+		
 		while (!TimerFlag);
 		TimerFlag = 0;
+		
 	}
 }
 
