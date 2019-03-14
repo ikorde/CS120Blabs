@@ -14,7 +14,7 @@ unsigned char finished = 0;			// flag finish round1
 unsigned char startGame=0, round1end=0, round2end=0, gameEnd=0; 
 enum states1 {reset,init,start,q1,disp1,q2,disp2,q3,disp3,end} state1;
 enum states2 {reset2,init_2,start_2,q1_2,disp1_2,q2_2,disp2_2,q3_2,disp3_2,end_2} state2;
-enum states3 {welcome,round1,round2,win} state3;
+enum states3 {welcome,round1,round2,win,lose} state3;
 	
 void ADC_init() {
 	ADCSRA |= (1 << ADEN) | (1 << ADSC) | (1 << ADATE);
@@ -26,17 +26,19 @@ void ADC_init() {
 }
 	
 	
-/*
-int tick(state){
+unsigned char print[16];
+char * string; 
+unsigned char cnt = 0;
+void message(char * s, unsigned char c){
 	for (int i=0; i<16; ++i){
-		print[i] = string[(cnt+i)%38];
+		print[i] = s[(cnt+i)%c];
 	}
 
-	cnt = (cnt+1)%38;
+	cnt = (cnt+1)%c;
 	LCD_DisplayString(1, print);
-	return state;
+	//return state;
 }
-*/
+
 
 void fill() {
 	LCD_Cursor(17); LCD_WriteData('+');
@@ -58,11 +60,11 @@ void tick1() {
 	//wait=0; 
 	switch(state1) {		// Transitions
 		case reset: 
-			if(b1==0x08) state1=init;
+			if(b1==0x08) state1=init; 
 			else state1=reset; 
 		break;
 		case init:
-			if( wait<20) {++wait; state1=init;}
+			if( wait<20) {++wait; state1=init; startGame = 1;}
 			else {state1=start; wait=0; }
 		break; 
 		case start:
@@ -124,9 +126,6 @@ void tick1() {
 			LCD_Cursor(28); LCD_WriteData('/');
 			LCD_Cursor(30); LCD_WriteData('>');
 			LCD_Cursor(32); LCD_WriteData('=');
-
-			
-			//LCD_DisplayString(18,"* / - < = + >");
 		break;
 		case init: 
 			LCD_ClearScreen();
@@ -197,7 +196,7 @@ void tick1() {
 }
 
 /*  Tick function for round2. Displays two questions on separate lines of LCD. 
-	If top equation is greater, push joystick up, if bottom greater, push 
+	If top equation is true, push joystick up, if false, push 
 	joystick down. 
 */
 void tick2() {
@@ -218,8 +217,8 @@ void tick2() {
 			else {state2=q1_2; wait=0; }
 		break;
 		case q1_2:
-			if(ADC > 900) { state2=disp1_2; }				//joystick up
-			else if(ADC < 500) {score++; state2=disp1_2; }		//joystick down
+			if(ADC > 900) { state2=disp1_2; wait=0; }					//joystick up
+			else if(ADC < 500) {score++; state2=disp1_2; wait=0; }		//joystick down
 			else if(wait > 75) {state2=disp1_2; wait=0; }
 			else if(b1_2==0x08) {state2 = reset2; wait=0; }
 			else {state2 = q1_2; ++wait;}
@@ -230,8 +229,8 @@ void tick2() {
 			else {state2=q2_2; wait=0; }
 		break;
 		case q2_2:
-			if(ADC > 900) {score++; state2=disp2_2; }				//joystick up
-			else if(ADC < 500) {state2=disp2_2; }		//joystick down
+			if(ADC > 900) {score++; state2=disp2_2; wait=0; }			//joystick up
+			else if(ADC < 500) {state2=disp2_2;wait=0;  }				//joystick down
 			else if(wait > 75) {state2=disp2_2; wait=0; }
 			else if(b1_2==0x08) {state2 = reset2; wait=0; }
 			else {state2 = q2_2; ++wait; }
@@ -242,8 +241,8 @@ void tick2() {
 			else {state2=q3_2; wait=0; }
 		break;
 		case q3_2:
-			if(ADC > 900) {state2=disp3_2; }				//joystick up
-			else if(ADC < 500) {score++; state2=disp3_2; }		//joystick down
+			if(ADC > 900) {state2=disp3_2; wait=0; }					//joystick up
+			else if(ADC < 500) {score++; state2=disp3_2; wait=0; }		//joystick down
 			else if(wait > 75) {state2=disp3_2; wait=0; }
 			else if(b1_2==0x08) {state2 = reset2; wait=0; }
 			else { state2 = q3_2; ++wait; } 
@@ -260,6 +259,17 @@ void tick2() {
 		default: state2 = init_2;break;
 	}	
 	switch(state2) {			// Actions
+		case reset2: 
+			LCD_DisplayString(1,"+ > * / - = + <");
+			LCD_Cursor(18); LCD_WriteData('-');
+			LCD_Cursor(20); LCD_WriteData('=');
+			LCD_Cursor(22); LCD_WriteData('+');
+			LCD_Cursor(24); LCD_WriteData('<');
+			LCD_Cursor(26); LCD_WriteData('*');
+			LCD_Cursor(28); LCD_WriteData('/');
+			LCD_Cursor(30); LCD_WriteData('>');
+			LCD_Cursor(32); LCD_WriteData('=');
+		break;
 		case init_2: 
 			LCD_ClearScreen();
 			LCD_DisplayString(1,"ROUND 2");
@@ -276,7 +286,7 @@ void tick2() {
 		break;
 		case disp1_2:
 			LCD_ClearScreen();
-			LCD_DisplayString(4, "QUESTION 2");
+			LCD_DisplayString(1, "QUESTION 2");
 			fill();
 		break;
 		case q2_2:
@@ -285,7 +295,7 @@ void tick2() {
 		break;
 		case disp2_2:
 			LCD_ClearScreen();
-			LCD_DisplayString(4, "QUESTION 3");
+			LCD_DisplayString(1, "QUESTION 3");
 			fill();
 		break;
 		case q3_2:
@@ -294,43 +304,69 @@ void tick2() {
 		break;
 		case disp3_2:
 			LCD_ClearScreen();
-			LCD_DisplayString(4, "END ROUND 2");
+			LCD_DisplayString(1, "END ROUND 2");
+			fill();
 		break;
 		case end_2:
 			LCD_ClearScreen();
-			LCD_DisplayString(2, "DONE");
+			LCD_DisplayString(1, "DONE");
+			fill();
+			round2end=1;
 		break;
 	}
 }
 
-void tick3() {
+void tick3(unsigned char sc) {
 	switch(state3) {	// Transitions
+		
 		case welcome:
-			if(wait<20) {++wait; state1=disp1;}
-			else {state1=q2; wait=0; }
+			if(startGame) { state3=round1;}
+			else {state3=welcome; }
 		break;
 		case round1:
-		
+			if(!finished) state3 = round1; 
+			else state3 = round2; 
 		break;
 		case round2:
-		
+			if(!round2end) state3 = round2; 
+			else if (sc==6) state3 = win; 
+			else state3 = lose;  
 		break;
 		case win: 
-		
+			state3 = win;
+		break;
+		case lose: 
+			state3 = lose; 
 		break;
 	}
 	switch(state3) {	// Actions
 		case welcome:
+			//LCD_ClearScreen();
+			string= "Quick Maths.Answer fast.Win=100%.";
+			LCD_DisplayString(1,string);
 			
 		break;
 		case round1:
-		
+			LCD_ClearScreen();
+			string = "Use buttons to select answer";
+			//message(string,37);
+			LCD_DisplayString(1,string);
 		break;
 		case round2:
-		
+			LCD_ClearScreen();
+			string = "Use joystick to select T/F";
+			//message(string,35);
+			LCD_DisplayString(1,string);
 		break;
 		case win:
-		
+			LCD_ClearScreen();
+			string = "WINNER :)";
+			LCD_DisplayString(1,string);
+		break;
+		case lose: 
+			LCD_ClearScreen();
+			string = "NOT QUICK ENOUGH :(";
+			LCD_DisplayString(1,string); 
 		break;
 	}
 }
@@ -368,80 +404,66 @@ void scoreDisp(unsigned char finalscore) {
 
 int main(void)
 {
-	DDRB = 0x00; PORTB = 0xFF; // sender USART
-	DDRA = 0x00; PORTA = 0xFF; // sender USART
-	//DDRB = 0xFF; PORTB = 0x00; // transmitter USART
-	//DDRA = 0xFF; PORTA = 0x00; // transmitter USART
+	/* Transmitter 
+	DDRB = 0x00; PORTB = 0xFF; 
+	DDRA = 0x00; PORTA = 0xFF;
+	*/
+	// /* Receiver
+	DDRB = 0xFF; PORTB = 0x00; 
+	DDRA = 0xFF; PORTA = 0x00;
+	// */ 
 	DDRC = 0xFF; PORTC = 0x00;
 	DDRD = 0xFF; PORTD = 0x00;
 	static task task1;
 	task *tasks[] = { &task1 };
 	const unsigned short numTasks = sizeof(tasks)/sizeof(task*);
 	unsigned long int SMTick1_period = 20;
-
-	// USART code , communication between two micro-controllers
-	/*initUSART(0);
-	unsigned char t = 0x01;
-	//USART_Send(t,0);
-	if(USART_HasReceived(0)==0x01) {
-		PORTB = USART_Receive(0); 
-	}*/
-	
-	// Task 1
-	task1.state = reset;//Task initial state.
-	task1.period = SMTick1_period;//Task Period.
-	task1.elapsedTime = SMTick1_period;//Task current elapsed time.
-	task1.TickFct = &tick1;//Function pointer for the tick.
 	
 	TimerSet(100);
 	TimerOn();
 	LCD_init();
 	ADC_init();
 	initUSART(1);
-	//state1=reset;
 	unsigned short i;
 	unsigned char t = 0x00;
+	unsigned char fs = 0x00;
+	unsigned char send = 0x00; 
 	while(1)
 	{
-		// Scheduler code/ TASK code
-		/*
-		for ( i = 0; i < numTasks; i++ ) {
-			// Task is ready to tick
-			if (tasks[i]->elapsedTime == tasks[i]->period ) {
-				// Setting next state for task
-				tasks[i]->state = tasks[i]->TickFct(tasks[i]->state);
-				// Reset the elapsed time for next tick.
-				tasks[i]->elapsedTime = 0;
-			}
-			tasks[i]->elapsedTime += 1;
-		}
-		*/
+		/* Transmitter 
 		if(!finished) tick1();
 		else tick2();
+		*/
 		
 		//USART 
-		USART_Send(score,1);
+		send = score; 
+		if(startGame) send = send | 0x80; 
+		if(finished) send = send | 0x40; 
+		if(round2end) send = send | 0x20;
+		
+		/*
+		USART_Send(send,1);
+		*/
  		if(USART_HasReceived(1)) {
- 			t = USART_Receive(1);
-			if(t==3) PORTB=0x01;
- 			scoreDisp(t);
+ 			fs = USART_Receive(1) & 0x0F;
+ 			scoreDisp(fs);
+			t = USART_Receive(1) & 0x80;
+			if(t) startGame=1; 
+			t = USART_Receive(1) & 0x40; 
+			if(t) finished=1;
+			t = USART_Receive(1) & 0x20;
+			if(t) round2end=1;
  		}
-		//USART_Flush(1);
+		
+		// /* Receiver
+		tick3(fs); 
+		// */ 
 		
 		while (!TimerFlag);
 		TimerFlag = 0;
 	}
 }
 
-/* CHECKLIST 
-	X add round2 questions
-	X wire 7 seg, connect to microcon2 and output score 
-	- display instructions on lcd2, synch up periods of answers/display
-	- add round 3
-	X reset button 
-	- way of winning/losing 
-
-*/
 
 
 
