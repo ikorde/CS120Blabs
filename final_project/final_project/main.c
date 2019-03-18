@@ -348,7 +348,7 @@ void tick3(unsigned char sc) {
 		break;
 		case round1:
 			LCD_ClearScreen();
-			string = "Use buttons to select answer";
+			string = "Use buttons to  select answer";
 			//message(string,37);
 			LCD_DisplayString(1,string);
 		break;
